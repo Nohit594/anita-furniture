@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-playfair: "Playfair Display", serif;
+  --font-inter: "Inter", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #fdf6ec;
+  color: #2d1b0e;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f5e6d3;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4622d;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a34e20;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-terracotta px-6 py-3 font-medium text-white shadow-warm transition-all duration-300 hover:bg-terracotta-dark hover:shadow-warm-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-terracotta/40 px-6 py-3 font-medium text-terracotta-dark transition-all duration-300 hover:bg-terracotta/10 active:scale-95;
+  }
+  .card {
+    @apply rounded-3xl border border-sand bg-white/70 p-6 shadow-sm backdrop-blur-sm;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-sand bg-white/80 px-4 py-3 text-espresso outline-none transition-all placeholder:text-espresso/40 focus:border-terracotta focus:ring-2 focus:ring-terracotta/20;
+  }
+  .glass-nav {
+    @apply border-b border-sand/60 bg-cream/70 backdrop-blur-lg;
+  }
+}
+
+/* Shimmer loading skeleton */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f5e6d3;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
