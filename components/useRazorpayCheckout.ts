@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 declare global {
@@ -21,26 +21,26 @@ function loadScript(src: string): Promise<boolean> {
 }
 
 interface CheckoutArgs {
-  orderId: string; // our internal Order _id
+  orderId: string;
   userName?: string | null;
   userEmail?: string | null;
   onSuccess?: () => void;
 }
 
-/**
- * Hook returning a `pay` function that:
- * 1. asks our backend to create a Razorpay order for the given internal order
- * 2. opens the Razorpay checkout modal
- * 3. verifies the signature on success
- */
-export function useRazorpayCheckout() {
-  const pay = useCallback(async (args: CheckoutArgs) => {
-    const ok = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
-    if (!ok) {
-      toast.error("Failed to load payment gateway. Check your connection.");
-      return;
-    }
+interface MockState {
+  open: boolean;
+  amount: number;
+  orderId: string;
+  razorpayOrderId: string;
+  onSuccess: () => void;
+}
 
+const MOCK = process.env.NEXT_PUBLIC_MOCK_PAYMENTS === "true";
+
+export function useRazorpayCheckout() {
+  const [mock, setMock] = useState<MockState | null>(null);
+
+  const pay = useCallback(async (args: CheckoutArgs) => {
     try {
       const res = await fetch("/api/payment/create-order", {
         method: "POST",
@@ -50,6 +50,25 @@ export function useRazorpayCheckout() {
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error || "Could not start payment");
+        return;
+      }
+
+      // ── Mock mode ──
+      if (data.mock || MOCK) {
+        setMock({
+          open: true,
+          amount: data.amount,
+          orderId: args.orderId,
+          razorpayOrderId: data.razorpayOrderId,
+          onSuccess: args.onSuccess ?? (() => {}),
+        });
+        return;
+      }
+
+      // ── Real Razorpay ──
+      const ok = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+      if (!ok) {
+        toast.error("Failed to load payment gateway. Check your connection.");
         return;
       }
 
@@ -93,5 +112,7 @@ export function useRazorpayCheckout() {
     }
   }, []);
 
-  return { pay };
+  const closeMock = useCallback(() => setMock(null), []);
+
+  return { pay, mock, closeMock };
 }

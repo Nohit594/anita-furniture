@@ -9,6 +9,7 @@ import { ImageOff, ShoppingBag, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { useRazorpayCheckout } from "@/components/useRazorpayCheckout";
+import { MockPaymentModal } from "@/components/MockPaymentModal";
 
 interface Item {
   _id: string;
@@ -22,7 +23,7 @@ interface Item {
 export function CatalogueDetail({ item }: { item: Item }) {
   const { data: session } = useSession();
   const router = useRouter();
-  const { pay } = useRazorpayCheckout();
+  const { pay, mock, closeMock } = useRazorpayCheckout();
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -143,6 +144,17 @@ export function CatalogueDetail({ item }: { item: Item }) {
           </div>
         </motion.div>
       </div>
+
+      {mock && (
+        <MockPaymentModal
+          open={mock.open}
+          amount={mock.amount}
+          orderId={mock.orderId}
+          razorpayOrderId={mock.razorpayOrderId}
+          onSuccess={mock.onSuccess}
+          onClose={closeMock}
+        />
+      )}
     </div>
   );
 }

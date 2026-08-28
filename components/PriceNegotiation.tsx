@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, HandCoins, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useRazorpayCheckout } from "@/components/useRazorpayCheckout";
+import { MockPaymentModal } from "@/components/MockPaymentModal";
 
 interface Props {
   order: any;
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export function PriceNegotiation({ order, userName, userEmail, onUpdate }: Props) {
-  const { pay } = useRazorpayCheckout();
+  const { pay, mock, closeMock } = useRazorpayCheckout();
   const [counter, setCounter] = useState("");
   const [showCounter, setShowCounter] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -153,6 +154,16 @@ export function PriceNegotiation({ order, userName, userEmail, onUpdate }: Props
         <button onClick={startPayment} disabled={busy} className="btn-primary mt-5 !py-2.5">
           <CreditCard size={18} /> Pay now
         </button>
+        {mock && (
+          <MockPaymentModal
+            open={mock.open}
+            amount={mock.amount}
+            orderId={mock.orderId}
+            razorpayOrderId={mock.razorpayOrderId}
+            onSuccess={mock.onSuccess}
+            onClose={closeMock}
+          />
+        )}
       </motion.div>
     );
   }

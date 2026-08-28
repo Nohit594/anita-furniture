@@ -4,10 +4,8 @@ import { Order } from "@/lib/models/Order";
 import { getSession } from "@/lib/session";
 import { getRazorpay } from "@/lib/razorpay";
 
-/**
- * Creates a Razorpay order for an internal order that is ready to pay.
- * The payable amount is the finalPrice (catalogue) or the accepted price.
- */
+const isMock = process.env.NEXT_PUBLIC_MOCK_PAYMENTS === "true";
+
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session?.user)
@@ -34,10 +32,28 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
 
+  // ── Mock mode: skip real Razorpay ──
+  if (isMock) {
+    const mockOrderId = `mock_order_${order._id}`;
+    order.razorpayOrderId = mockOrderId;
+    if (order.status === "price_set") {
+      order.finalPrice = amount;
+      order.status = "customer_accepted";
+    }
+    await order.save();
+    return NextResponse.json({
+      razorpayOrderId: mockOrderId,
+      amount: Math.round(amount * 100),
+      currency: "INR",
+      mock: true,
+    });
+  }
+
+  // ── Real Razorpay ──
   try {
     const rzp = getRazorpay();
     const rzpOrder = await rzp.orders.create({
-      amount: Math.round(amount * 100), // paise
+      amount: Math.round(amount * 100),
       currency: "INR",
       receipt: `order_${order._id}`,
       notes: { internalOrderId: order._id.toString() },
