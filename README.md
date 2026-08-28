@@ -55,7 +55,7 @@ Fill in `.env.local`:
 | `FREEIMAGE_HOST_API_KEY` | [freeimage.host/page/api](https://freeimage.host/page/api) |
 
 **Google OAuth redirect URI** to add in the console:
-`http://localhost:3000/api/auth/callback/google`
+`http://localhost:PORT/api/auth/callback/google` (replace PORT with your dev port, usually 3000)
 
 ### 3. Seed sample catalogue (optional)
 
@@ -69,7 +69,7 @@ npm run seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:PORT](http://localhost:PORT) (default port 3000).
 
 ---
 
