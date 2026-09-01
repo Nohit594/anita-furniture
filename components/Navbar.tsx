@@ -15,6 +15,7 @@ import {
   ChevronDown,
   User,
   UserPlus,
+  Receipt,
 } from "lucide-react";
 import { useAddresses } from "@/components/AddressContext";
 import { CategoryNav } from "@/components/CategoryNav";
@@ -132,6 +133,13 @@ function ProfileMenu() {
                 onClick={() => setOpen(false)}
               >
                 My Orders
+              </MenuLink>
+              <MenuLink
+                href="/payments"
+                icon={Receipt}
+                onClick={() => setOpen(false)}
+              >
+                Payment History
               </MenuLink>
               <button
                 onClick={() => {
@@ -291,6 +299,13 @@ export function Navbar() {
                     className="rounded-lg px-4 py-3 font-medium text-espresso hover:bg-sand"
                   >
                     My Orders
+                  </Link>
+                  <Link
+                    href="/payments"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-4 py-3 font-medium text-espresso hover:bg-sand"
+                  >
+                    Payment History
                   </Link>
                   {isAdmin && (
                     <Link

@@ -4,41 +4,34 @@ import { Order } from "@/lib/models/Order";
 import Payment from "@/lib/models/Payment";
 import { getSession } from "@/lib/session";
 
-// Only active when NEXT_PUBLIC_MOCK_PAYMENTS=true
+/**
+ * Records a FAILED payment attempt on the customer side.
+ * Called from the frontend when the gateway reports payment.failed.
+ * Does not change the order status — the order stays payable so the
+ * customer can retry.
+ */
 export async function POST(req: NextRequest) {
-  if (process.env.NEXT_PUBLIC_MOCK_PAYMENTS !== "true") {
-    return NextResponse.json({ error: "Not available" }, { status: 404 });
-  }
-
   const session = await getSession();
   if (!session?.user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await connectDB();
-  const { orderId, razorpayOrderId } = await req.json();
-
-  if (!razorpayOrderId?.startsWith("mock_order_")) {
-    return NextResponse.json({ error: "Invalid mock order" }, { status: 400 });
-  }
+  const { orderId, reason, razorpayOrderId, razorpayPaymentId } =
+    await req.json();
 
   const order = await Order.findById(orderId);
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
   if (order.userId.toString() !== session.user.id)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  order.status = "paid";
-  const paymentId = `mock_pay_${Date.now()}`;
-  order.razorpayPaymentId = paymentId;
-  await order.save();
-
   await Payment.create({
     userId: order.userId,
     orderId: order._id,
-    razorpayOrderId,
-    razorpayPaymentId: paymentId,
+    razorpayOrderId: razorpayOrderId ?? order.razorpayOrderId,
+    razorpayPaymentId,
     amount: order.finalPrice ?? order.adminPrice ?? 0,
-    status: "success",
-    method: "mock",
+    status: "failed",
+    reason: typeof reason === "string" ? reason.slice(0, 200) : "Payment failed",
   });
 
   return NextResponse.json({ success: true });

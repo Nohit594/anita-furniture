@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Order } from "@/lib/models/Order";
+import { User } from "@/lib/models/User";
 import { getSession } from "@/lib/session";
 import { getRazorpay } from "@/lib/razorpay";
 
@@ -31,6 +32,29 @@ export async function POST(req: NextRequest) {
       { error: "Order is not ready for payment" },
       { status: 400 }
     );
+
+  // ── Require a delivery address before payment ──
+  const user = await User.findById(session.user.id).select("addresses");
+  const addresses = user?.addresses ?? [];
+  const chosen =
+    addresses.find((a: any) => a.isDefault) ?? addresses[0] ?? null;
+  if (!chosen)
+    return NextResponse.json(
+      { error: "Please add a delivery address before paying", code: "NO_ADDRESS" },
+      { status: 400 }
+    );
+
+  // Snapshot the delivery address onto the order
+  order.shippingAddress = {
+    label: chosen.label,
+    fullName: chosen.fullName,
+    phone: chosen.phone,
+    line1: chosen.line1,
+    line2: chosen.line2,
+    city: chosen.city,
+    state: chosen.state,
+    pincode: chosen.pincode,
+  };
 
   // ── Mock mode: skip real Razorpay ──
   if (isMock) {

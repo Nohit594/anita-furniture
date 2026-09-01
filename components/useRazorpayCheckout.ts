@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { useAddresses } from "@/components/AddressContext";
 
 declare global {
   interface Window {
@@ -39,9 +40,17 @@ const MOCK = process.env.NEXT_PUBLIC_MOCK_PAYMENTS === "true";
 
 export function useRazorpayCheckout() {
   const [mock, setMock] = useState<MockState | null>(null);
+  const { defaultAddress, openModal } = useAddresses();
 
   const pay = useCallback(async (args: CheckoutArgs) => {
     try {
+      // ── Require a delivery address before starting payment ──
+      if (!defaultAddress) {
+        toast.error("Please add a delivery address before paying.");
+        openModal();
+        return;
+      }
+
       const res = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,7 +58,12 @@ export function useRazorpayCheckout() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Could not start payment");
+        if (data.code === "NO_ADDRESS") {
+          toast.error(data.error || "Please add a delivery address before paying.");
+          openModal();
+        } else {
+          toast.error(data.error || "Could not start payment");
+        }
         return;
       }
 
@@ -105,12 +119,31 @@ export function useRazorpayCheckout() {
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", () => toast.error("Payment failed. Try again."));
+      rzp.on("payment.failed", async (resp: any) => {
+        const reason =
+          resp?.error?.description || resp?.error?.reason || "Payment failed";
+        toast.error("Payment failed. Try again.");
+        // Record the failed transaction on the customer side
+        try {
+          await fetch("/api/payment/record-failure", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: args.orderId,
+              razorpayOrderId: data.razorpayOrderId,
+              razorpayPaymentId: resp?.error?.metadata?.payment_id,
+              reason,
+            }),
+          });
+        } catch {
+          /* best-effort logging */
+        }
+      });
       rzp.open();
     } catch {
       toast.error("Something went wrong starting payment.");
     }
-  }, []);
+  }, [defaultAddress, openModal]);
 
   const closeMock = useCallback(() => setMock(null), []);
 

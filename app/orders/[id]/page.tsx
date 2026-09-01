@@ -7,8 +7,8 @@ import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { PriceNegotiation } from "@/components/PriceNegotiation";
-import { formatCurrency, formatDate, STATUS_META } from "@/lib/utils";
-import { ArrowLeft, ImageOff, Info } from "lucide-react";
+import { formatDate, STATUS_META } from "@/lib/utils";
+import { ArrowLeft, ImageOff, Info, MapPin, Receipt } from "lucide-react";
 
 export default function OrderDetailPage({
   params,
@@ -141,6 +141,25 @@ export default function OrderDetailPage({
               </div>
             )}
 
+            {order.shippingAddress && (
+              <div className="mt-4 rounded-2xl border border-sand bg-white p-4">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-espresso/50">
+                  <MapPin size={13} className="text-terracotta" /> Delivery address
+                </p>
+                <p className="mt-1.5 text-sm font-medium text-espresso">
+                  {order.shippingAddress.fullName} · {order.shippingAddress.phone}
+                </p>
+                <p className="text-sm text-espresso/70">
+                  {order.shippingAddress.line1}
+                  {order.shippingAddress.line2
+                    ? `, ${order.shippingAddress.line2}`
+                    : ""}
+                  , {order.shippingAddress.city}, {order.shippingAddress.state} -{" "}
+                  {order.shippingAddress.pincode}
+                </p>
+              </div>
+            )}
+
             {/* Negotiation / payment actions */}
             <div className="mt-6">
               <PriceNegotiation
@@ -151,19 +170,24 @@ export default function OrderDetailPage({
               />
             </div>
 
-            {order.status === "paid" && (
+            {["paid", "in_production", "completed"].includes(order.status) && (
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="mt-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5 text-center"
               >
                 <p className="font-display text-xl font-bold text-emerald-700">
-                  Payment complete 🎉
+                  Order confirmed ✅
                 </p>
                 <p className="mt-1 text-sm text-emerald-700/80">
-                  Paid {formatCurrency(order.finalPrice ?? order.adminPrice)}. We&apos;ll
-                  start crafting your order.
+                  Your payment was received. Track progress from the status above.
                 </p>
+                <Link
+                  href="/payments"
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:underline"
+                >
+                  <Receipt size={14} /> View payment history
+                </Link>
               </motion.div>
             )}
           </div>

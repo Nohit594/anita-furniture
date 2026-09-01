@@ -13,6 +13,17 @@ export type OrderStatus =
   | "in_production" // being manufactured
   | "completed"; // delivered / done
 
+export interface IShippingAddress {
+  label?: string;
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
 export interface IOrder extends Document {
   userId: Types.ObjectId;
   type: OrderType;
@@ -25,11 +36,26 @@ export interface IOrder extends Document {
   customerCounterPrice?: number;
   finalPrice?: number;
   adminNotes?: string;
+  shippingAddress?: IShippingAddress; // snapshot captured at payment time
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const ShippingAddressSchema = new Schema<IShippingAddress>(
+  {
+    label: { type: String },
+    fullName: { type: String, required: true },
+    phone: { type: String, required: true },
+    line1: { type: String, required: true },
+    line2: { type: String },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const OrderSchema = new Schema<IOrder>(
   {
@@ -59,6 +85,7 @@ const OrderSchema = new Schema<IOrder>(
     customerCounterPrice: { type: Number },
     finalPrice: { type: Number },
     adminNotes: { type: String },
+    shippingAddress: { type: ShippingAddressSchema },
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
   },

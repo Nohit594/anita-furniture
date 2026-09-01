@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CreditCard, ShieldCheck, Loader2, IndianRupee } from "lucide-react";
+import { X, CreditCard, ShieldCheck, Loader2, IndianRupee, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 interface MockPaymentModalProps {
@@ -23,6 +23,7 @@ export function MockPaymentModal({
   onClose,
 }: MockPaymentModalProps) {
   const [paying, setPaying] = useState(false);
+  const [failing, setFailing] = useState(false);
 
   const simulate = async () => {
     setPaying(true);
@@ -43,6 +44,28 @@ export function MockPaymentModal({
       toast.error(err.message || "Something went wrong");
     } finally {
       setPaying(false);
+    }
+  };
+
+  const simulateFailure = async () => {
+    setFailing(true);
+    await new Promise((r) => setTimeout(r, 900));
+    try {
+      await fetch("/api/payment/record-failure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          razorpayOrderId,
+          reason: "Simulated failed payment",
+        }),
+      });
+      toast.error("Payment failed. You can try again.");
+      onClose();
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setFailing(false);
     }
   };
 
@@ -74,7 +97,7 @@ export function MockPaymentModal({
               </div>
               <button
                 onClick={onClose}
-                disabled={paying}
+                disabled={paying || failing}
                 className="rounded-full p-1 transition hover:bg-white/20"
                 aria-label="Close"
               >
@@ -120,7 +143,7 @@ export function MockPaymentModal({
 
               <button
                 onClick={simulate}
-                disabled={paying}
+                disabled={paying || failing}
                 className="btn-primary mt-4 w-full justify-center disabled:opacity-60"
               >
                 {paying ? (
@@ -130,6 +153,22 @@ export function MockPaymentModal({
                 ) : (
                   <>
                     <ShieldCheck size={18} /> Simulate Payment
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={simulateFailure}
+                disabled={paying || failing}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+              >
+                {failing ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Failing…
+                  </>
+                ) : (
+                  <>
+                    <Ban size={16} /> Simulate Failure
                   </>
                 )}
               </button>

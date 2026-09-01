@@ -10,6 +10,7 @@ import {
   Plus,
   Home,
   Package,
+  Receipt,
   ShieldCheck,
   Pencil,
   Check,
@@ -226,6 +227,18 @@ export default function AccountPage() {
             <div>
               <p className="font-semibold">My Orders</p>
               <p className="text-sm text-espresso/60">Track & manage orders</p>
+            </div>
+          </Link>
+          <Link
+            href="/payments"
+            className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
+              <Receipt size={20} />
+            </span>
+            <div>
+              <p className="font-semibold">Payment History</p>
+              <p className="text-sm text-espresso/60">View your transactions</p>
             </div>
           </Link>
           {isAdmin && (

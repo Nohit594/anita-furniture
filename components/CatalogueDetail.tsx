@@ -10,6 +10,7 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { useRazorpayCheckout } from "@/components/useRazorpayCheckout";
 import { MockPaymentModal } from "@/components/MockPaymentModal";
+import { useAddresses } from "@/components/AddressContext";
 
 interface Item {
   _id: string;
@@ -24,12 +25,18 @@ export function CatalogueDetail({ item }: { item: Item }) {
   const { data: session } = useSession();
   const router = useRouter();
   const { pay, mock, closeMock } = useRazorpayCheckout();
+  const { defaultAddress, openModal } = useAddresses();
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleOrder = async () => {
     if (!session) {
       signIn("google");
+      return;
+    }
+    if (!defaultAddress) {
+      toast.error("Please add a delivery address before ordering.");
+      openModal();
       return;
     }
     setLoading(true);
