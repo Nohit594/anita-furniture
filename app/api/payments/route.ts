@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Payment from "@/lib/models/Payment";
 import { Order } from "@/lib/models/Order";
+import { User } from "@/lib/models/User";
 import { CatalogueItem } from "@/lib/models/CatalogueItem";
 import { getSession } from "@/lib/session";
 
@@ -18,6 +19,7 @@ export async function GET(_req: NextRequest) {
   await connectDB();
   // Ensure referenced models are registered for populate()
   void Order;
+  void User;
   void CatalogueItem;
 
   const isAdmin = session.user.role === "admin";
@@ -25,6 +27,7 @@ export async function GET(_req: NextRequest) {
 
   const payments = await Payment.find(filter)
     .sort({ createdAt: -1 })
+    .populate({ path: "userId", select: "name email" })
     .populate({
       path: "orderId",
       select: "type description catalogueItemId",

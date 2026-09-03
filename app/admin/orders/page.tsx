@@ -4,21 +4,42 @@ import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { OrderStatusBadge } from "@/components/OrderStatusBadge";
+import { AdminStatusBadge } from "@/components/AdminStatusBadge";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ImageOff, Search, Trash2, Loader2 } from "lucide-react";
+import { ImageOff, Search, Trash2, Loader2, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FILTERS = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
-  { value: "price_set", label: "Priced" },
+  { value: "price_set", label: "Price Sent" },
   { value: "customer_countered", label: "Countered" },
-  { value: "customer_accepted", label: "Accepted" },
-  { value: "paid", label: "Paid" },
+  { value: "customer_accepted", label: "Payment Pending" },
+  { value: "paid", label: "Confirmed" },
   { value: "in_production", label: "In Production" },
   { value: "completed", label: "Completed" },
 ];
+
+function PaymentBadge({ status }: { status: string }) {
+  const confirmed = ["paid", "in_production", "completed"].includes(status);
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+        confirmed
+          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+          : "border-orange-200 bg-orange-50 text-orange-600"
+      )}
+    >
+      {confirmed ? (
+        <CheckCircle2 size={11} />
+      ) : (
+        <Clock size={11} />
+      )}
+      {confirmed ? "Payment Confirmed" : "Not Paid"}
+    </span>
+  );
+}
 
 function AdminOrdersInner() {
   const searchParams = useSearchParams();
@@ -118,11 +139,12 @@ function AdminOrdersInner() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-sand px-2 py-0.5 text-xs font-medium capitalize">
                       {order.type}
                     </span>
-                    <OrderStatusBadge status={order.status} />
+                    <AdminStatusBadge status={order.status} />
+                    <PaymentBadge status={order.status} />
                   </div>
                   <p className="mt-1 line-clamp-1 text-sm font-medium">
                     {order.userId?.name || "Customer"} —{" "}
@@ -141,7 +163,12 @@ function AdminOrdersInner() {
                       </p>
                     )}
                   {(order.finalPrice ?? order.adminPrice) != null && (
-                    <p className="font-semibold text-terracotta">
+                    <p className={cn(
+                      "font-semibold",
+                      ["paid", "in_production", "completed"].includes(order.status)
+                        ? "text-emerald-700"
+                        : "text-terracotta"
+                    )}>
                       {formatCurrency(order.finalPrice ?? order.adminPrice)}
                     </p>
                   )}

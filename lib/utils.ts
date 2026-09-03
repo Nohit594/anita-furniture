@@ -72,3 +72,46 @@ export const STATUS_META: Record<
     description: "Order delivered. Thank you!",
   },
 };
+
+/** Admin-facing labels — clearer than customer-facing ones */
+export const ADMIN_STATUS_META: Record<
+  string,
+  { label: string; color: string }
+> = {
+  pending: {
+    label: "Pending Review",
+    color: "bg-amber-100 text-amber-800 border-amber-300",
+  },
+  approved: {
+    label: "Approved",
+    color: "bg-blue-100 text-blue-800 border-blue-300",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "bg-red-100 text-red-800 border-red-300",
+  },
+  price_set: {
+    label: "Price Sent",
+    color: "bg-terracotta/10 text-terracotta-dark border-terracotta/30",
+  },
+  customer_countered: {
+    label: "Customer Countered",
+    color: "bg-purple-100 text-purple-800 border-purple-300",
+  },
+  customer_accepted: {
+    label: "Payment Pending",
+    color: "bg-orange-100 text-orange-700 border-orange-300",
+  },
+  paid: {
+    label: "Payment Confirmed",
+    color: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  },
+  in_production: {
+    label: "In Production",
+    color: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-teal-100 text-teal-800 border-teal-300",
+  },
+};

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, Users, Sofa } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, Sofa, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { href: "/admin/payments", label: "Payments", icon: Receipt },
   { href: "/admin/catalogue", label: "Catalogue", icon: Sofa },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
