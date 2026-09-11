@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
 import { requireUser } from "@/lib/session";
 
-// PATCH /api/user/profile — update the signed-in user's name and/or avatar
+// PATCH /api/user/profile — update the signed-in user's name, avatar, and/or phone
 export async function PATCH(req: NextRequest) {
   const sessionUser = await requireUser();
   if (!sessionUser) {
@@ -32,6 +32,14 @@ export async function PATCH(req: NextRequest) {
     update.image = body.image.trim();
   }
 
+  if (typeof body.phone === "string") {
+    const phone = body.phone.trim();
+    if (phone && !/^[0-9+\-\s()]{7,15}$/.test(phone)) {
+      return NextResponse.json({ error: "Invalid phone number" }, { status: 400 });
+    }
+    update.phone = phone;
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
@@ -48,5 +56,6 @@ export async function PATCH(req: NextRequest) {
     ok: true,
     name: (user as any).name,
     image: (user as any).image,
+    phone: (user as any).phone,
   });
 }
