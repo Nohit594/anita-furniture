@@ -17,6 +17,7 @@ import {
   X,
   Camera,
   Loader2,
+  Phone,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -30,6 +31,11 @@ export default function AccountPage() {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(session?.user?.name || "");
   const [savingName, setSavingName] = useState(false);
+
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [phone, setPhone] = useState((session?.user as any)?.phone || "");
+  const [savingPhone, setSavingPhone] = useState(false);
+
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -55,6 +61,26 @@ export default function AccountPage() {
       toast.error(err.message || "Something went wrong");
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const savePhone = async () => {
+    const trimmed = phone.trim();
+    setSavingPhone(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: trimmed }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not save phone");
+      setEditingPhone(false);
+      toast.success("Phone number saved");
+    } catch (err: any) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setSavingPhone(false);
     }
   };
 
@@ -103,7 +129,7 @@ export default function AccountPage() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-6 flex items-center gap-5 rounded-3xl border border-sand bg-white p-6 shadow-sm"
+          className="mt-6 flex items-start gap-5 rounded-3xl border border-sand bg-white p-6 shadow-sm"
         >
           {/* Avatar with upload */}
           <div className="relative shrink-0">
@@ -143,7 +169,8 @@ export default function AccountPage() {
             />
           </div>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 space-y-2">
+            {/* Name row */}
             {editingName ? (
               <div className="flex items-center gap-2">
                 <input
@@ -164,49 +191,84 @@ export default function AccountPage() {
                   onClick={saveName}
                   disabled={savingName}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-terracotta text-white transition hover:bg-terracotta-dark disabled:opacity-60"
-                  aria-label="Save name"
                 >
-                  {savingName ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Check size={16} />
-                  )}
+                  {savingName ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 </button>
                 <button
-                  onClick={() => {
-                    setName(session?.user?.name || "");
-                    setEditingName(false);
-                  }}
+                  onClick={() => { setName(session?.user?.name || ""); setEditingName(false); }}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-sand text-espresso/60 transition hover:bg-sand"
-                  aria-label="Cancel"
                 >
                   <X size={16} />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <p className="font-display text-2xl font-bold">
-                  {session?.user?.name}
-                </p>
+                <p className="font-display text-2xl font-bold">{session?.user?.name}</p>
                 <button
-                  onClick={() => {
-                    setName(session?.user?.name || "");
-                    setEditingName(true);
-                  }}
+                  onClick={() => { setName(session?.user?.name || ""); setEditingName(true); }}
                   className="flex h-8 w-8 items-center justify-center rounded-full text-espresso/50 transition hover:bg-sand hover:text-terracotta"
-                  aria-label="Edit name"
                 >
                   <Pencil size={15} />
                 </button>
               </div>
             )}
+
+            {/* Email */}
             <p className="truncate text-espresso/60">{session?.user?.email}</p>
+
+            {/* Phone row */}
+            {editingPhone ? (
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-espresso/40" />
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    autoFocus
+                    maxLength={15}
+                    placeholder="e.g. 9876543210"
+                    className="rounded-xl border border-sand bg-cream/40 py-2 pl-8 pr-3 text-sm outline-none focus:border-terracotta focus:bg-white"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") savePhone();
+                      if (e.key === "Escape") { setPhone((session?.user as any)?.phone || ""); setEditingPhone(false); }
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={savePhone}
+                  disabled={savingPhone}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta text-white transition hover:bg-terracotta-dark disabled:opacity-60"
+                >
+                  {savingPhone ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                </button>
+                <button
+                  onClick={() => { setPhone((session?.user as any)?.phone || ""); setEditingPhone(false); }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-sand text-espresso/60 transition hover:bg-sand"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Phone size={14} className="shrink-0 text-espresso/40" />
+                {(session?.user as any)?.phone ? (
+                  <span className="text-sm text-espresso/70">{(session?.user as any).phone}</span>
+                ) : (
+                  <span className="text-sm text-espresso/40 italic">No phone number</span>
+                )}
+                <button
+                  onClick={() => { setPhone((session?.user as any)?.phone || ""); setEditingPhone(true); }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-espresso/40 transition hover:bg-sand hover:text-terracotta"
+                >
+                  <Pencil size={13} />
+                </button>
+              </div>
+            )}
+
             <span
               className={cn(
-                "mt-2 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
-                isAdmin
-                  ? "bg-terracotta/10 text-terracotta"
-                  : "bg-sand text-espresso/70"
+                "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
+                isAdmin ? "bg-terracotta/10 text-terracotta" : "bg-sand text-espresso/70"
               )}
             >
               {isAdmin ? <ShieldCheck size={13} /> : <Home size={13} />}
@@ -217,10 +279,7 @@ export default function AccountPage() {
 
         {/* Quick links */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <Link
-            href="/orders"
-            className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm"
-          >
+          <Link href="/orders" className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
               <Package size={20} />
             </span>
@@ -229,10 +288,7 @@ export default function AccountPage() {
               <p className="text-sm text-espresso/60">Track & manage orders</p>
             </div>
           </Link>
-          <Link
-            href="/payments"
-            className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm"
-          >
+          <Link href="/payments" className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
               <Receipt size={20} />
             </span>
@@ -242,10 +298,7 @@ export default function AccountPage() {
             </div>
           </Link>
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm"
-            >
+            <Link href="/admin" className="card flex items-center gap-3 transition hover:-translate-y-0.5 hover:shadow-warm">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-terracotta/10 text-terracotta">
                 <ShieldCheck size={20} />
               </span>
@@ -269,9 +322,7 @@ export default function AccountPage() {
           <div className="mt-4 flex flex-col items-center rounded-3xl border border-dashed border-sand py-14 text-center">
             <MapPin className="text-terracotta/40" size={44} />
             <p className="mt-3 font-medium">No addresses saved</p>
-            <p className="text-sm text-espresso/60">
-              Add a delivery address for faster checkout.
-            </p>
+            <p className="text-sm text-espresso/60">Add a delivery address for faster checkout.</p>
             <button onClick={openModal} className="btn-ghost mt-4">
               <Plus size={16} /> Add your first address
             </button>
@@ -283,27 +334,19 @@ export default function AccountPage() {
                 key={a._id}
                 className={cn(
                   "rounded-2xl border p-5",
-                  a.isDefault
-                    ? "border-terracotta bg-terracotta/5"
-                    : "border-sand bg-white"
+                  a.isDefault ? "border-terracotta bg-terracotta/5" : "border-sand bg-white"
                 )}
               >
                 <p className="flex items-center gap-2 font-semibold">
                   <Home size={15} className="text-terracotta" />
                   {a.label}
                   {a.isDefault && (
-                    <span className="rounded-full bg-terracotta px-2 py-0.5 text-[10px] font-bold text-white">
-                      DEFAULT
-                    </span>
+                    <span className="rounded-full bg-terracotta px-2 py-0.5 text-[10px] font-bold text-white">DEFAULT</span>
                   )}
                 </p>
-                <p className="mt-2 text-sm text-espresso/80">
-                  {a.fullName} · {a.phone}
-                </p>
+                <p className="mt-2 text-sm text-espresso/80">{a.fullName} · {a.phone}</p>
                 <p className="text-sm text-espresso/60">
-                  {a.line1}
-                  {a.line2 ? `, ${a.line2}` : ""}, {a.city}, {a.state} -{" "}
-                  {a.pincode}
+                  {a.line1}{a.line2 ? `, ${a.line2}` : ""}, {a.city}, {a.state} - {a.pincode}
                 </p>
               </div>
             ))}
